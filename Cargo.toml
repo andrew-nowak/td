@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 time = { version = "0.3.19", features = ["formatting", "parsing", "local-offset", "large-dates", "macros"] }
+
+[dev-dependencies]
+pretty_assertions = "1"
