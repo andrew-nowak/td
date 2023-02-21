@@ -1,5 +1,5 @@
 use time::macros::time;
-use time::{Duration, OffsetDateTime, Weekday};
+use time::{Duration, Month, OffsetDateTime, Weekday};
 
 pub struct ParseOptions {
 	pub(crate) now: OffsetDateTime,
@@ -14,6 +14,7 @@ pub fn try_parse(ts: &str, opts: &ParseOptions) -> Option<OffsetDateTime> {
 	.or_else(|| as_year(ts))
 	.or_else(|| as_unix_timestamp(ts))
 	.or_else(|| as_weekday(ts, opts))
+	.or_else(|| as_month(ts, opts))
 }
 
 fn as_unix_timestamp(ts: &str) -> Option<OffsetDateTime> {
@@ -25,6 +26,41 @@ fn as_unix_timestamp(ts: &str) -> Option<OffsetDateTime> {
 		.and_then(|sts| if sts.year() > 9999 { None } else { Some(sts) });
 
 	as_secs.or_else(|| OffsetDateTime::from_unix_timestamp_nanos(number * 1_000_000).ok())
+}
+
+fn as_month(ts: &str, opts: &ParseOptions) -> Option<OffsetDateTime> {
+	let month: Option<Month> = match ts.to_lowercase().as_str() {
+		"january" => Some(Month::January),
+		"february" => Some(Month::February),
+		"march" => Some(Month::March),
+		"april" => Some(Month::April),
+		"may" => Some(Month::May),
+		"june" => Some(Month::June),
+		"july" => Some(Month::July),
+		"august" => Some(Month::August),
+		"september" => Some(Month::September),
+		"october" => Some(Month::October),
+		"november" => Some(Month::November),
+		"december" => Some(Month::December),
+		_ => None,
+	};
+
+	month.map(|mo| {
+		let month_number: u8 = mo.into();
+		let now_month_number: u8 = opts.now.month().into();
+		(if month_number <= now_month_number {
+			opts.now
+				.replace_year(opts.now.year() + 1)
+				.unwrap()
+				.replace_month(mo)
+				.unwrap()
+		} else {
+			opts.now.replace_month(mo).unwrap()
+		})
+		.replace_time(time!(00:00))
+		.replace_day(1)
+		.unwrap()
+	})
 }
 
 fn as_year(ts: &str) -> Option<OffsetDateTime> {
@@ -73,7 +109,7 @@ fn as_weekday(ts: &str, opts: &ParseOptions) -> Option<OffsetDateTime> {
 mod tests {
 	use super::*;
 	use pretty_assertions::assert_eq;
-	use time::{format_description::well_known::Rfc3339, macros::datetime};
+	use time::macros::datetime;
 
 	#[test]
 	fn test_as_unix_timestamp() {
@@ -95,10 +131,26 @@ mod tests {
 	#[test]
 	fn test_as_year() {
 		assert_eq!(as_year("2020"), Some(datetime!(2020-01-01 00:00:00 UTC)));
+	}
+
+	#[test]
+	fn test_as_month() {
+		let opt = ParseOptions {
+			now: datetime!(2017-07-14 02:40:00 UTC),
+		};
 
 		assert_eq!(
-			OffsetDateTime::parse("2020-01-01T00:00:00.111Z", &Rfc3339).ok(),
-			Some(datetime!(2020-01-01 00:00:00.111 UTC))
+			as_month("February", &opt),
+			Some(datetime!(2018-02-01 00:00:00 UTC))
+		);
+
+		assert_eq!(
+			as_month("august", &opt),
+			Some(datetime!(2017-08-01 00:00:00 UTC))
+		);
+		assert_eq!(
+			as_month("july", &opt),
+			Some(datetime!(2018-07-01 00:00:00 UTC))
 		);
 	}
 
