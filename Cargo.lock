@@ -96,6 +96,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "td"
+version = "0.1.0"
+dependencies = [
+ "pretty_assertions",
+ "time",
+]
+
+[[package]]
 name = "time"
 version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -122,14 +130,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a460aeb8de6dcb0f381e1ee05f1cd56fcf5a5f6eb8187ff3d8f0b11078d38b7c"
 dependencies = [
  "time-core",
-]
-
-[[package]]
-name = "times"
-version = "0.1.0"
-dependencies = [
- "pretty_assertions",
- "time",
 ]
 
 [[package]]
